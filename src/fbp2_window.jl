@@ -1,65 +1,57 @@
-# fbp2_window.jl
+function my_boxcar(n, cutoff)
+    w = round(cutoff * n)
+    ii = [0:n-1;] .- n/2
+    window = abs.(ii) .< w/2
+    return window
+end
 
-export fbp2_window
+function my_hann(n, cutoff)
+    w = round(cutoff * n)
+    ii = [0:n-1;] .- n/2
+    window = 0.5 * (1 .+ cos.(2*pi*ii/w)) .* (abs.(ii) .< w/2)
+    return window
+end
 
-using FFTW: fftshift
+function my_hamming(n, cutoff)
+    w = round(cutoff * n)
+    ii = [0:n-1;] .- n/2
+    window = (0.54 .+ 0.46 * cos.(2*pi*ii/w)) .* (abs.(ii) .< w/2)
+    return window
+end
 
+function sscanf(thing::String)
+    arr = split(thing, " ")
+    intarr = parse.(Float32, arr)
+    return intarr
+    error("not done yet")
+    return 0
+end
 
-"""
-    window = fbp2_window(n, window)
-
-Create an apodizing window of length `n` and fftshift it
-"""
-function fbp2_window(n::Int,window::Symbol)
-
-    # boxcar?
-    if window === :none || window === :ramp
-        window = ones(n)
-#=
-    elseif window === :boxcar
-        #cut = sscanf(window, 'boxcar,%g');
-        window = my_boxcar(n, cut)
-
-    elseif window === :hamming
-        #cut = sscanf(window, 'hamming,%g');
-        window = my_hamming(n, cut)
-
-    elseif window === :hanning
-        #cut = sscanf(window, 'hanning,%g');
-        window = my_hann(n, cut)
-=#
-    elseif window === :hann
-        window = my_hann(n, 1.0)
-    elseif window === :hann50
-        window = my_hann(n, 0.5)
-    elseif window === :hann75
-        window = my_hann(n, 0.75)
-    elseif window === :hann80
-        window = my_hann(n, 0.80)
-
-    else
-        throw("unknown window $window")
+function fbp2_window(n::Int, window)
+    if typeof(window) == String
+        if window == "" || window == "boxcar" || window == "ramp"
+            window = ones(n,1)
+        elseif window[1:7] == "boxcar,"
+            cut = sscanf(window[8:end])
+            window = my_boxcar(n, cut)
+        elseif window[1:8] == "hamming,"
+            cut = sscanf(window[9:end])
+            window = my_hamming(n, cut)
+        elseif window == "hann"
+            window = my_hann(n, 1.0)
+        elseif window == "hann50"
+            window = my_hann(n, 0.5)
+        elseif window == "hann75"
+            window = my_hann(n, 0.75)
+        elseif window == "hann80"
+            window = my_hann(n, 0.8)
+        else
+            error("unknown window")
+        end
+    elseif size(window) != n
+        error("bad window length")
     end
 
-    return fftshift(window)
-end
-
-window(n::Int, window::AbstractVector{<:Real}) = fftshift(window)
-
-function my_boxcar(n::Int, cutoff::Real)
-    w = round(cutoff * n)
-    ii = (0:n-1) .- n/2
-    return (abs.(ii) .< w/2)
-end
-
-function my_hann(n::Int, cutoff::Real)
-    w = round(cutoff * n)
-    ii = (0:n-1) .- n/2
-    return 0.5 * (1 .+ cos.(2*pi*ii/w)) .* (abs.(ii) .< w/2)
-end
-
-function my_hamming(n::Int, cutoff::Real)
-    w = round(cutoff * n)
-    ii = (0:n-1) .- n/2
-    return (0.54 .+ 0.46 * cos.(2*pi*ii/w)) .* (abs.(ii) .< w/2)
+    window = fftshift(window)
+    return window
 end

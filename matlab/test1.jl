@@ -1,12 +1,13 @@
 using MIRT
+using MIRTjim
 using MATLAB
 using Plots
 
 # setup matlab to use MIRT
 if !@isdefined(irtdir)
-	ENV["MATLAB_ROOT"] = "/Applications/freeware/matlab"
+	ENV["MATLAB_ROOT"] = "/Applications/matlab"
 
-	irtdir = "/Users/fessler/src/matlab/alg"
+	irtdir = "/Users/jasonhu/Documents/MATLAB/phd"
 	tmp = "addpath('$irtdir')"
 	eval_string(tmp)
 	mat"setup"
@@ -36,12 +37,12 @@ mat"im_mat = ellipse_im(ig, ell)"
 
 @mget im_mat
 
-plot(jim(im_julia, "julia"), jim(im_mat, "matlab"), jim(im_mat - im_julia)) 
+plot(jim(im_julia, "julia"), jim(im_mat, "matlab"), jim(im_mat - im_julia))
 
 sino_julia = ellipse_sino(sg, ell)
 
 mat"[sino_mat, pos, ang] = ellipse_sino(sg, ell)"
 mat"sizeof(sino_mat)"
-#@mget sino_mat
+@mget sino_mat
 
-#plot(jim(sino_julia, "julia"), jim(sino_mat, "matlab"), jim(sino_mat - sino_julia)) 
+#plot(jim(sino_julia, "julia"), jim(sino_mat, "matlab"), jim(sino_mat - sino_julia))
