@@ -3,8 +3,8 @@ fbp-par.jl
 Simple interfaces to parallel-beam FBP for user convenience
 =#
 
-using MIRT: sino_geom, image_geom # todo
-#using Sinograms: fbp2, RealU
+using ImageGeoms: ImageGeom
+#using Sinograms: fbp2, RealU, SinoPar
 
 export fbp, fbp!
 
@@ -41,12 +41,12 @@ Writes result into `image` matrix.
 # Input
 * `sino::AbstractMatrix`
 
-# Options for `sino_geom`
+# Options for `SinoPar` constructor
 * `dr` : sinogram radial spacing; default 1
 * `orbit` : angular range in degrees; default 180
-* `orbit_start` : angular range in degrees; default 180
+* `orbit_start` : angular range in degrees; default 0
 
-# Options for `image_geom`
+# Options for `ImageGeom`
 * `dx`, `dy`, `offset_x`, `offset_y`
 
 # Options
@@ -59,8 +59,8 @@ function fbp!(
     image::AbstractMatrix{<:Number},
     sino::AbstractMatrix{<:Number} ;
     dr::RealU = 1,
-    orbit::Real = 180,
-    orbit_start::Real = 0,
+    orbit::RealU = 180,
+    orbit_start::RealU = zero(orbit),
     dx::RealU = dr,
     dy::RealU = dx,
     offset_x::Real = 0,
@@ -69,8 +69,8 @@ function fbp!(
 )
     nb, na = size(sino)
     nx, ny = size(image)
-    sg = sino_geom(:par ; nb, na, d = dr, orbit, orbit_start)
-    ig = image_geom(; nx, ny, dx, dy, offset_x, offset_y)
+    sg = SinoPar( ; nb, na, d = dr, orbit, orbit_start)
+    ig = ImageGeom(; dims=(nx, ny), deltas=(dx, dy), offsets=(offset_x, offset_y))
 #   plan = FBPplan(sg, ig)
     plan = fbp2(sg, ig) # todo FBPplan ??
 #   fbp2!(image, sino, plan) # todo

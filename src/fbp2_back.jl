@@ -1,28 +1,28 @@
-# fbp2_back.jl
+# fbp-back.jl
 
-export fbp2_back
+export fbp_back
 
 using LazyGrids: ndgrid
 using ImageGeoms: embed
 
 
 """
-    img = fbp2_back(sg, ig, sino; ia_skip)
+    img = fbp_back(sg, ig, sino ; ia_skip)
 
 2D backprojection for FBP.
 
 in
 - `sg::SinoGeom`
 - `ig::ImageGeom`
-- `sino::AbstractArray{<:Number}`      sinogram(s) (line integrals), usually ramp filtered
+- `sino::AbstractArray{<:Number}` sinogram(s) (line integrals), usually ramp filtered
 
 options
-- `ia_skip::Int`                        downsample in angle to save time for quick tests (default: 1)
+- `ia_skip::Int` downsample in angle to save time for quick tests (default: 1)
 
 out
-- `img::AbstractArray{<:Number}`       reconstructed image(s)
+- `img::Array{<:Number}` reconstructed image(s)
 """
-function fbp2_back(
+function fbp_back(
     sg::SinoPar,
     ig::ImageGeom,
     sino::AbstractMatrix{<:Number};
@@ -36,8 +36,8 @@ function fbp2_back(
     nb != sg.nb && throw("nb size")
     sino = [sino; zeros(eltype(sino),size(sino,2),2)']
 
-    xc, yc = ndgrid(ig.x, ig.y)
-    rr = sqrt.(abs2.(xc) + abs2.(yc)) # [nx ny]
+    xc, yc = ndgrid(axes(ig)...)
+    rr = @. sqrt(abs2(xc) + abs2(yc)) # (nx,ny)
     rmax = ((sg.nb - 1) / 2 - abs(sg.offset)) * sg.d
     mask = ig.mask
     if do_r_mask
@@ -52,16 +52,16 @@ function fbp2_back(
     img = 0
     for ia = 1:ia_skip:sg.na
 
-        rr = @.(xc * cang[ia] + yc * sang[ia]) # [np]
-        rr = @.(rr / sg.d + sg.w + 1) # unitless bin index, +1 because julia
+        rr = @. (xc * cang[ia] + yc * sang[ia]) # [np]
+        rr = @. (rr / sg.d + sg.w + 1) # unitless bin index, +1 because julia
 
         # nearest neighbor interpolation:
 #=
-    %    ib = round(bb);
-    %    if any(ib < 1 | ib > nb), error 'bug', end
-    %    % trick: make out-of-sinogram indices point to those extra zeros
-    %    ib(ib < 1 | ib > nb) = nb+1;
-    %    img = img + sino(ib, ia) ./ L2;
+         ib = round(bb)
+         if any(ib < 1 | ib > nb), error 'bug', end
+         # trick: make out-of-sinogram indices point to those extra zeros
+         ib(ib < 1 | ib > nb) = nb+1;
+         img = img + sino(ib, ia) ./ L2;
 =#
         # linear interpolation:
         il = floor.(Int64, rr) # left bin
@@ -70,21 +70,21 @@ function fbp2_back(
             il = min.(il,nb+1)
             il = max.(il,1)
         end
-        # % (any(il .< 1) || any(il .>= nb)) && throw("bug")
+        # (any(<(1), il) || any(≥(nb), il)) && throw("il bug")
 
         wr = rr - il # left weight
         #@show extrema(wr), rr[1000:1005], il[1000:1005]
         wl = 1 .- wr # right weight
-        img = @.(img + wl * sino[il, ia] + wr * sino[il.+1, ia])
+        img = @. (img + wl * sino[il, ia] + wr * sino[il.+1, ia])
     end
 
     # img = (deg2rad(sg.orbit) / (sg.na/ia_skip)) * embed(img, mask);
-    # img = pi / (sg.na/ia_skip) * embed(img, mask) % 2008-10-14
-    return π / (sg.na/ia_skip) * embed(img, mask)
+    return (π * ia_skip / sg.na) * embed(img, mask)
 end
 
+
 # fan-beam case
-function fbp2_back(
+function fbp_back(
     sg::SinoFan,
     ig::ImageGeom,
     sino::AbstractMatrix{<:Number};
@@ -99,7 +99,7 @@ function fbp2_back(
         throw("bad dsf")
     end
 
-    return fbp2_back(
+    return fbp_back(
         sino, sg.orbit, sg.orbit_start,
         sg.dsd, sg.dso, sg.dfs, sg.ds, sg.offset,
         sg.source_offset,
@@ -109,7 +109,7 @@ function fbp2_back(
 end
 
 
-function fbp2_back(
+function fbp_back(
     sino::AbstractMatrix{<:Number},
     orbit::Union{Symbol,Real}, orbit_start::Real,
     dsd::RealU,
@@ -210,6 +210,6 @@ function fbp2_back(
 end
 
 # 3d support
-function fbp2_back(sg::SinoGeom, ig::ImageGeom, sino::AbstractArray{<:Number}; kwargs...)
-    return mapslices(sino -> fbp2_back(sg, ig, sino; kwargs...), sino, [1,2])
+function fbp_back(sg::SinoGeom, ig::ImageGeom, sino::AbstractArray{<:Number}; kwargs...)
+    return mapslices(sino -> fbp_back(sg, ig, sino; kwargs...), sino, [1,2])
 end

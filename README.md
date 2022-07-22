@@ -20,9 +20,20 @@ Currently under development.
 Tested with Julia ≥ 1.6.
 
 
-### Related packages
+### Related packages in Julia
 
 * https://github.com/JuliaImages/ImageReconstruction.jl (`radon`, `iradon`)
+
+### Related packages in other languages
+
+* Astra https://www.astra-toolbox.com Matlab/Python
+* CASToR https://castor-project.org
+* Duke MCR todo
+* FreeCT http://cvib.ucla.edu/freect C/CUDA
+* STIR http://stir.sourceforge.net
+* SIRF https://github.com/SyneRBI/SIRF
+* Tomopedia list: https://tomopedia.github.io/software (todo: add JuliaImageRecon)
+
 
 <!-- URLs -->
 [action-img]: https://github.com/JeffFessler/Sinograms.jl/workflows/CI/badge.svg

@@ -132,8 +132,8 @@ sino = proj2.(r, ϕ', 5, 1, 3)
 jimsino = (sino, title) -> jim(
     r, ϕ, sino; title, aspect_ratio=:none,
     xlabel = "r", ylabel = "ϕ", ylims=(0,π), yticks=([0, π], ["0", "π"]),
-	yflip=false, xticks = [-10, 0, 2, 5, 8, 10],
-	clim = (0, 6),
+    yflip=false, xticks = [-10, 0, 2, 5, 8, 10],
+    clim = (0, 6),
 )
 jimsino(sino, "Sinogram for one disk")
 
